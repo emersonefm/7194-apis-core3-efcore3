@@ -18,7 +18,7 @@ namespace Backoffice.Controllers
         public async Task<ActionResult<List<Product>>> Get([FromServices] DataContext context)
         {
             var products = await context.Products.Include(x => x.Category).AsNoTracking().ToListAsync();
-            return products;
+            return Ok(products);
         }
 
         [HttpGet]
@@ -27,7 +27,7 @@ namespace Backoffice.Controllers
         public async Task<ActionResult<Product>> GetById([FromServices] DataContext context, int id)
         {
             var product = await context.Products.Include(x => x.Category).AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-            return product;
+            return Ok(product);
         }
 
         [HttpGet]
@@ -36,7 +36,7 @@ namespace Backoffice.Controllers
         public async Task<ActionResult<List<Product>>> GetByCategory([FromServices] DataContext context, int id)
         {
             var products = await context.Products.Include(x => x.Category).AsNoTracking().Where(x => x.CategoryId == id).ToListAsync();
-            return products;
+            return Ok(products);
         }
 
         [HttpPost]
@@ -48,9 +48,16 @@ namespace Backoffice.Controllers
         {
             if (ModelState.IsValid)
             {
-                context.Products.Add(model);
-                await context.SaveChangesAsync();
-                return model;
+                try
+                {
+                    context.Products.Add(model);
+                    await context.SaveChangesAsync();
+                    return Ok(model);
+                }
+                catch (System.Exception)
+                {
+                    return BadRequest(new { message = "Não foi possível criar o produto" });
+                }
             }
             else
             {

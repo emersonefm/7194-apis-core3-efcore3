@@ -9,8 +9,14 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Backoffice.Controllers
 {
+    // Endpont => URL
+    // https://localhost:5001 (com ssl)
+    // http://localhost:5000 (sem ssl)
+    // https://localhost:5001/categories
+
+    // https://localhost:5001/categories
     [Route("v1/categories")]
-    public class CategoryController : Controller
+    public class CategoryController : ControllerBase
     {
         [HttpGet]
         [Route("")]
@@ -20,7 +26,7 @@ namespace Backoffice.Controllers
         public async Task<ActionResult<List<Category>>> Get([FromServices] DataContext context)
         {
             var categories = await context.Categories.AsNoTracking().ToListAsync();
-            return categories;
+            return Ok(categories);
         }
 
         [HttpGet]
@@ -29,12 +35,12 @@ namespace Backoffice.Controllers
         public async Task<ActionResult<Category>> GetById([FromServices] DataContext context, int id)
         {
             var category = await context.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-            return category;
+            return Ok(category);
         }
 
         [HttpPost]
         [Route("")]
-        // [Authorize(Roles = "employee")]
+        [Authorize(Roles = "employee")]
         [AllowAnonymous]
         public async Task<ActionResult<Category>> Post(
             [FromServices] DataContext context,
@@ -48,12 +54,11 @@ namespace Backoffice.Controllers
             {
                 context.Categories.Add(model);
                 await context.SaveChangesAsync();
-                return model;
+                return Ok(model);
             }
             catch (Exception)
             {
                 return BadRequest(new { message = "Não foi possível criar a categoria" });
-
             }
         }
 
@@ -77,12 +82,15 @@ namespace Backoffice.Controllers
             {
                 context.Entry<Category>(model).State = EntityState.Modified;
                 await context.SaveChangesAsync();
-                return model;
+                return Ok(model);
             }
             catch (DbUpdateConcurrencyException)
             {
-                return BadRequest(new { message = "Não foi possível atualizar a categoria" });
-
+                return BadRequest(new { message = "Este registro já foi atualizado" });
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { message = "Não foi possível criar a categoria" });
             }
         }
 
@@ -101,7 +109,7 @@ namespace Backoffice.Controllers
             {
                 context.Categories.Remove(category);
                 await context.SaveChangesAsync();
-                return category;
+                return Ok(new { message = "Categoria removida com sucesso" });
             }
             catch (Exception)
             {
